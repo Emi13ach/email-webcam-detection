@@ -2,9 +2,12 @@ import cv2
 import time
 import streamlit as st
 from timer import get_time, get_day
+from glob import glob
+from emailing import send_email
 
 st.title("Motion Detector")
 start = st.button("Start Camera")
+# stop = st.button("Stop Camera")
 
 if start:
     streamlit_image = st.image([])
@@ -13,10 +16,10 @@ if start:
     first_frame = None
     # Status - motion detector.
     status_list = [0, 0]
+    counter = 0
 
     while True:
-        # Status - motion detector.
-        status = 0
+        status = 0  # Status - motion detector (not detected).
         check, frame = cap.read()
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray_frame_gau = cv2.GaussianBlur(gray_frame, (21, 21), 0)
@@ -45,14 +48,19 @@ if start:
                 x, y, w, h = cv2.boundingRect(contour)
                 rectangle = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 3)
                 if rectangle.any():
-                    # Status - motion detector.
-                    status = 1
+                    status = 1  # Status - motion detector (detected).
+                    # Choose a image to send.
+                    cv2.imwrite(f"images/img_{counter}.png", frame)
+                    counter += 1
+                    img_list = glob("images/*.png")
+                    idx_img = int(len(img_list) / 2)
+                    img_to_send = img_list[idx_img]
 
         # Send en email when motion is detected and status_list is [1, 0] - end of movement
         status_list[0] = status_list[1]
         status_list[1] = status
         if status_list[0] == 1 and status_list[1] == 0:
-            print("Sending message")
+            send_email(img_to_send)
 
         # Add day of the week and date to the frame.
         cv2.putText(img=frame, text=get_day(), org=(50, 50),
