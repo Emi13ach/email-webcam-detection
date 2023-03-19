@@ -12,7 +12,7 @@ start = st.button("Start Camera")
 if start:
     streamlit_image = st.image([])
     cap = cv2.VideoCapture(0)
-    time.sleep(1)
+    time.sleep(3)
     first_frame = None
     # Status - motion detector.
     status_list = [0, 0]
@@ -50,9 +50,9 @@ if start:
                 if rectangle.any():
                     status = 1  # Status - motion detector (detected).
                     # Choose a image to send.
-                    cv2.imwrite(f"images/img_{counter}.png", frame)
+                    cv2.imwrite(f"images/{counter}.png", frame)
                     counter += 1
-                    img_list = glob("images/*.png")
+                    img_list = sorted(glob("images/*.png"))
                     idx_img = int(len(img_list) / 2)
                     img_to_send = img_list[idx_img]
 
@@ -60,6 +60,7 @@ if start:
         status_list[0] = status_list[1]
         status_list[1] = status
         if status_list[0] == 1 and status_list[1] == 0:
+            print(img_list, idx_img, img_to_send)
             send_email(img_to_send)
 
         # Add day of the week and date to the frame.

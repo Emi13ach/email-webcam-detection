@@ -29,4 +29,4 @@ def send_email(image_path):
 
 
 if __name__ == '__main__':
-    send_email("images/img_01.png")
+    send_email("images/01.png")
