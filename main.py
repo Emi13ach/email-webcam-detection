@@ -4,6 +4,7 @@ import streamlit as st
 from timer import get_time, get_day
 from glob import glob
 from emailing import send_email
+import os
 
 st.title("Motion Detector")
 start = st.button("Start Camera")
@@ -17,6 +18,11 @@ if start:
     # Status - motion detector.
     status_list = [0, 0]
     counter = 0
+
+    def clear_folder():
+        images = glob("images/*.png")
+        for image in images:
+            os.remove(image)
 
     while True:
         status = 0  # Status - motion detector (not detected).
@@ -62,6 +68,7 @@ if start:
         if status_list[0] == 1 and status_list[1] == 0:
             print(img_list, idx_img, img_to_send)
             send_email(img_to_send)
+            clear_folder()
 
         # Add day of the week and date to the frame.
         cv2.putText(img=frame, text=get_day(), org=(50, 50),
