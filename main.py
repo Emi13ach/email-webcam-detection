@@ -5,6 +5,7 @@ from timer import get_time, get_day
 from glob import glob
 from emailing import send_email
 import os
+from threading import Thread
 
 st.title("Motion Detector")
 start = st.button("Start Camera")
@@ -19,7 +20,7 @@ if start:
     status_list = [0, 0]
     counter = 0
 
-    def clear_folder():
+    def clean_folder():
         images = glob("images/*.png")
         for image in images:
             os.remove(image)
@@ -58,17 +59,23 @@ if start:
                     # Choose a image to send.
                     cv2.imwrite(f"images/{counter}.png", frame)
                     counter += 1
-                    img_list = sorted(glob("images/*.png"))
-                    idx_img = int(len(img_list) / 2)
-                    img_to_send = img_list[idx_img]
 
         # Send en email when motion is detected and status_list is [1, 0] - end of movement
         status_list[0] = status_list[1]
         status_list[1] = status
         if status_list[0] == 1 and status_list[1] == 0:
+            img_list = glob("images/*.png")
+            idx_img = int(len(img_list) / 2)
+            img_to_send = img_list[idx_img]
             print(img_list, idx_img, img_to_send)
-            send_email(img_to_send)
-            clear_folder()
+            email_thread = Thread(target=send_email, args=(img_to_send, ))
+            email_thread.daemon = True
+            clean_thread = Thread(target=clean_folder)
+            clean_thread.daemon = True
+            counter = 0
+
+            email_thread.start()
+            clean_thread.start()
 
         # Add day of the week and date to the frame.
         cv2.putText(img=frame, text=get_day(), org=(50, 50),
